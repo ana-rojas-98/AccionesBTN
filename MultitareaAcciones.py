@@ -1,15 +1,17 @@
-import numpy as np
+#from _typeshed import Self
 import json
-from websocket import create_connection
-import asyncio
+import websocket, json
 import pymysql
 import multiprocessing
-import ctypes 
+from binance import Client
+from decimal import Decimal as D, ROUND_DOWN, ROUND_UP
+import math
+
 
 options = {}
 options['origin'] = 'https://exchange.blockchain.com'
 url = "wss://ws.prod.blockchain.info/mercury-gateway/v1/ws"
-ws = create_connection(url, **options)
+#ws = create_connection(url, **options)
 rango = 43350
 balancesUSD  = 0.0
 balancesBTN = 0.0
@@ -27,117 +29,177 @@ cursor.execute(sql)
 results = cursor.fetchall()
 #print(results[1][1])
 
-def inscribircuentas(tokenCuen):
-    tokenn = tokenCuen
-    msg = '{"token":"' + tokenn + '", "action": "subscribe", "channel": "auth"}'
-    l2 = '{"token":" ' + tokenn + '", "action": "subscribe", "channel": "l2", "symbol": "BTC-USD","granularity": 60}'
-    prices = '{"token": "' + tokenn + '" , "action": "subscribe", "channel": "prices", "symbol": "BTC-USD","granularity": 60}'
-    tradesubscribecr='{"token": "' + tokenn + '", "action": "subscribe", "channel": "trading", "symbol": "BTC-USD", "marginEligible":false, "signedMarginUserAgreement":false}'
-    orderjdz='{"action": "NewOrderSingle", "channel": "trading","clOrdID": "Client ID 3","symbol": "BTC-USD","ordType": "market","timeInForce": "GTC","side": "buy","orderQty": 2}'
-    cuentastatus='{"action": "subscribe","channel": "balances"}'
-    ws.send(msg)
-    result =  ws.recv()
-    print(result)
-    ws.send(tradesubscribecr)
-    result3 =  ws.recv()
-    print(result3)
-    ws.send(cuentastatus)
-    result1 =  ws.recv()
-    print(result1  + 'h5')
-    ws.send(l2)
-    result5 =  ws.recv()
-    print(result5 + 'h5')
+class MySocket(object):
 
-def recibirDatos(tokenCuen, tarea):
-    try:
-        print(tokenCuen)
-        global balancesUSD
-        global balancesBTN
-        print(str(balancesUSD) + tarea)
-        print(str(balancesBTN) + tarea)
-        data = ws.recv()
-        print(tarea + data)
-        arregloprecio=json.loads(data)
-        if 'balances' in arregloprecio:
-            if len(arregloprecio['balances'])>0:
-                balancesUSD =  arregloprecio["balances"][0]["balance"]
-                balancesBTN =  arregloprecio["balances"][1]["balance"]
-                print(str(balancesUSD) + 'balancesUSDtarea1')
-                print(str(balancesBTN) + 'balancesBTNtarea1')
-        if 'asks' in arregloprecio:
-            arrprecio = arregloprecio['asks']
-            if len(arrprecio) > 0:
-                precio = arregloprecio['asks'][0]
-                print (precio['px'] )
-                if precio['px']>rango:
-                    if(balancesUSD>0):
-                        print ("comprar hay USD " + tokenCuen)
-                    if(balancesUSD<=0):
-                        print ("comprar no hay USD " + tokenCuen)
-                if precio['px']<=rango:
-                    if(balancesBTN>0):
-                        print ("vender hay BTN " + tokenCuen)
-                    if(balancesBTN<=0):
-                        print ("vender no hay BTN " + tokenCuen)
+
+    def on_message(self, ws, message):
+        jsonMensaje=json.loads(message)
+        print(message)
+        print(jsonMensaje["p"])
+        cursor = db.cursor()
+        #val=1
+        sql1 = "SELECT * FROM acciones_api WHERE active = 1 and id=%s".format(0)
+        cursor.execute(sql1, self.tarea)
+        results = cursor.fetchall()
+        valor=results[0][6]
+        ValorporArriba=results[0][9]
+        ValorporAbajo=results[0][8]
+        porcentaje= results[0][7]/100
+        print("Valor ",valor)
+        print("ValorArriba ",ValorporArriba)
+        print("ValorAbajo ",ValorporAbajo)
+        print("Porcentaje ",porcentaje)
+        limiteInferior1= ValorporArriba-ValorporArriba*porcentaje
+        limiteSuperior1= ValorporArriba+ValorporArriba*porcentaje
+        limiteInferior2= ValorporAbajo-ValorporAbajo*porcentaje
+        limiteSuperior2= ValorporAbajo+ValorporAbajo*porcentaje
+        if(limiteInferior1<=float(jsonMensaje["p"])<=limiteSuperior1):
+            #idn=1
+            valor=ValorporArriba
+            sql1 = "UPDATE acciones_api SET valueBTC = %s WHERE id = %s;".format(0)
+            val = (ValorporArriba, self.tarea)
+            cursor.execute(sql1, val)
+            results = cursor.fetchall()
+            db.commit()
+            sql1 = "INSERT INTO acciones_historialordenes (`tipo`, `resultado`,  `Api_id`) VALUES (%s,%s,%s)".format(0)
+            order1="se actualizo tope al registro mayor"
+            val = ("Actualización", order1, self.tarea)
+            cursor.execute(sql1, val)
+            results = cursor.fetchall()
+            db.commit()
+            print("se actualizo registro mayor")
+        if(limiteInferior2<=float(jsonMensaje["p"])<=limiteSuperior2):
+            #idn=1
+            valor=ValorporAbajo
+            sql1 = "UPDATE acciones_api SET valueBTC = %s WHERE id = %s;".format(0)
+            val = (ValorporAbajo, self.tarea)
+            cursor.execute(sql1, val)
+            results = cursor.fetchall()
+            db.commit()
+            sql1 = "INSERT INTO acciones_historialordenes (`tipo`, `resultado`, `created_at`, `Api_id`) VALUES (%s,%s,now(),%s)".format(0)
+            order1="se actualizo tope al registro menor"
+            val = ("Actualización", order1, self.tarea)
+            cursor.execute(sql1, val)
+            results = cursor.fetchall()
+            db.commit()
+            print("se actualizo registro menor")
+
+        valorcomision= float(self.USDT_balance['free'])*0.001
+        valorComprar = (valor-valorcomision)
+        print("Comision ", valorcomision)
+        print("Valor para comprar ", valorComprar)
+        if(float(jsonMensaje["p"])>=valorComprar):
+            if(float(self.USDT_balance['free'])>0.1):
+                self.BTC_balance = self.clientUser.get_asset_balance(asset='BTC')
+                self.USDT_balance = self.clientUser.get_asset_balance(asset='USDT')
+                print(self.USDT_balance['free'])
+                if(float(self.USDT_balance['free'])>0.1):
+                    USDT=float(self.USDT_balance['free'])
+                    VALORACTUAL=float(jsonMensaje["p"])
+                    cantidadBTC = USDT/VALORACTUAL
+                    cantidadComprarBTC = math.floor(cantidadBTC* 100000)/100000
+                    print("Comprar")
+                    print("Cantidad a comprar sin redondear", cantidadBTC)
+                    print("Cantidad a comprar con redondear", cantidadComprarBTC)
+                    quant = D.from_float(cantidadComprarBTC).quantize(D(str(self.minimum)))
+                    print("cantidad BTC ", quant)
+                    if(USDT>10.3):
+                        #order1=self.clientUser.create_order(symbol='BTCUSDT',side=Client.SIDE_BUY,type=Client.ORDER_TYPE_MARKET,quantity=quant)
+                        #print(order1)
+                        print("Comprar hay USD")
+                        self.BTC_balance = self.clientUser.get_asset_balance(asset='BTC')
+                        self.USDT_balance = self.clientUser.get_asset_balance(asset='USDT')
+                        print("Nueva cantidad BTC" , self.BTC_balance['free'])
+                        print("Nueva cantidad USDT" , self.USDT_balance['free'])
+                        sql1 = "INSERT INTO acciones_historialordenes (`tipo`, `resultado`, `created_at`, `Api_id`) VALUES (%s,%s,now(),%s)".format(0)
+                        order1="prueba"
+                        val = ("Compra", order1, self.tarea)
+                        cursor.execute(sql1, val)
+                        results = cursor.fetchall()
+                        db.commit()
+                    else:
+                        print("Comprar hay USD Orden muy pequeña")
             else:
-                print (tarea + 'llego vacio')
+                print("Comprar no hay USD")
+
         else:
-            print (tarea + 'No se encontro')
+            valorcomision =float(self.USDT_balance['free'])*0.001
+            valorVender = (valor+valorcomision)
+            print("Comision ", valorcomision)
+            print("Valor para vender ", valorVender)
+            if(float(jsonMensaje["p"])<valorVender):
+                if(float(self.BTC_balance['free'])>self.minimum):
+                    self.BTC_balance = self.clientUser.get_asset_balance(asset='BTC')
+                    self.USDT_balance = self.clientUser.get_asset_balance(asset='USDT')
+                    if(float(self.BTC_balance['free'])>self.minimum):
+                        BTC = float(self.BTC_balance['free'])
+                        print("saldo", BTC)
+                        print("vender")
+                        cantidadVenderBTC = math.floor(BTC* 100000)/100000
+                        print("valor redondeado", cantidadVenderBTC )
+                        quant = D.from_float(cantidadVenderBTC).quantize(D(str(self.minimum)))
+                        print("cantidad BTC ",quant)
+                        if(quant>self.minimum):
+                            #order1=self.clientUser.create_order(symbol='BTCUSDT',side=Client.SIDE_SELL,type=Client.ORDER_TYPE_MARKET,quantity=quant)
+                            #print(order1)
+                            print("Vender hay BTC")
+                            self.BTC_balance = self.clientUser.get_asset_balance(asset='BTC')
+                            self.USDT_balance = self.clientUser.get_asset_balance(asset='USDT')
+                            print("Nueva cantidad BTC" , self.BTC_balance['free'])
+                            print("Nueva cantidad USDT" , self.USDT_balance['free'])
+                            sql1 = "INSERT INTO acciones_historialordenes (`tipo`, `resultado`, `created_at`, `Api_id`) VALUES (%s,%s,now(),%s)".format(0)
+                            order1="prueba"
+                            val = ("Venta", order1, self.tarea)
+                            cursor.execute(sql1, val)
+                            results = cursor.fetchall()
+                            db.commit()
+                        else:
+                            print("Vender hay BTC Orden muy pequeña")
+                else:
+                    print("Vender no hay BTC")
 
-    except ws.close():
-        print(f"Terminated")
-        #break
-
-    print("    ")
-    
-
-
-def retirar(saldo,lock):
-    lock.acquire()
-    print('retirar')
-    token = results[0][1] 
-    inscribircuentas(token)
-    lock.release()
-    while True:
-        toke= "TAREA1" + token
-        recibirDatos(toke, "tarea1")
-    
         
-
-def depositar(saldo,lock):
-    lock.acquire()
-    print('depositar')
-    token = results[1][1] 
-    inscribircuentas(token)
-    lock.release()
-    while True:
-        toke= "TAREA2" + token
-        recibirDatos(toke, "tarea2")
+                
+                
+    
+    def on_error(self,ws, error):
+        print(error)
         
-
-
-def nusuario(saldo,tarea,lock):
-    lock.acquire()
-    print('depositar')
-    print(saldo)
-    token = saldo
-    inscribircuentas(token)
-    lock.release()
-    while True:
-        toke= tarea + token
-        recibirDatos(toke, tarea)
+        
+    def on_close(self, ws, close_status_code, close_msg):
+        print("closed")
+ 
+ 
+    def nusuario(self, api,secretKey,valor,tarea,lock):
+        self.secretKey= secretKey
+        self.api = api
+        #self.valor= valor
+        self.tarea = tarea
+        cc="btcusdt"
+        socket = f"wss://stream.binance.com:9443/ws/{cc}@trade"
+        self.clientUser = Client(api, secretKey)
+        print(tarea)
+        #valor=valor
+        self.BTC_balance = self.clientUser.get_asset_balance(asset='BTC')
+        self.USDT_balance = self.clientUser.get_asset_balance(asset='USDT')
+        print(self.BTC_balance)
+        print(self.USDT_balance)
+        info = self.clientUser.get_symbol_info(symbol='BTCUSDT')
+        self.minimum = float(info['filters'][2]['minQty']) # 'minQty'
+        print(self.minimum)
+        ws = websocket.WebSocketApp(socket, on_message=self.on_message,on_close=self.on_close, on_error=self.on_error)
+        ws.run_forever()
 
         
 
 def ejecutar_transacciones():
-    
     global results
     processes = []
-
+    mysocket = MySocket()
     for row in results:
-        tarea = "TAREA" + str(row[0])
+        tarea = str(row[0])
         lock = multiprocessing.Lock()
-        process = multiprocessing.Process(target=nusuario, args=(row[1],tarea ,lock))
+        process = multiprocessing.Process(target=mysocket.nusuario, args=(row[1],row[5],row[6],tarea,lock))
         processes.append(process)
         process.start()
 

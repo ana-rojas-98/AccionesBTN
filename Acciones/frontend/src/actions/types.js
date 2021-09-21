@@ -13,3 +13,7 @@ export const LOGOUT_SUCCESS = 'LOGOUT_SUCCESS';
 export const REGISTER_SUCCESS = 'REGISTER_SUCCESS';
 export const REGISTER_FAIL = 'REGISTER_FAIL';
 export const CLEAR_LEADS = 'CLEAR_LEADS';
+
+
+export const GET_APIS = 'GET_APIS';
+export const PUT_APIS ='PUT_APIS'; 

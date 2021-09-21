@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from Acciones.models import Lead 
+from Acciones.models import Lead, Api
 
 class UserSerializer(serializers.Serializer): 
     id = serializers.ReadOnlyField()
@@ -32,3 +32,9 @@ class LeadSerializer(serializers.ModelSerializer):
   class Meta:
     model = Lead 
     fields = '__all__'
+
+
+class ApiSerializer(serializers.ModelSerializer):
+    class Meta: 
+        model = Api
+        fields = '__all__'

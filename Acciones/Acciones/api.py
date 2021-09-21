@@ -1,6 +1,7 @@
+
 from Acciones.models import Lead
 from rest_framework.response import Response
-from .serializers import UserSerializer, LeadSerializer
+from .serializers import UserSerializer, LeadSerializer, ApiSerializer
 from rest_framework.views import APIView
 from rest_framework import status, viewsets, permissions
 import numpy as np
@@ -24,7 +25,6 @@ class LeadViewSet(viewsets.ModelViewSet):
     permission_classes = [
         permissions.IsAuthenticated,
     ]
-   
     serializer_class = LeadSerializer
 
     def get_queryset(self):
@@ -32,6 +32,27 @@ class LeadViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         serializer.save(owner=self.request.user)
+
+    
+
+
+
+class ApiLeadViewSet(viewsets.ModelViewSet): 
+    permission_classes = [
+        permissions.IsAuthenticated,
+    ]
+
+    serializer_class = ApiSerializer
+
+    def get_queryset(self):
+        return self.request.user.Apis.all()
+
+    def perform_create(self, serializer):
+        serializer.save(User=self.request.user)
+
+    
+
+ 
 
 
 

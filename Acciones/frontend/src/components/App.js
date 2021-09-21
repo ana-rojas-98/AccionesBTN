@@ -6,6 +6,8 @@ import { HashRouter as Router, Route, Switch, Redirect } from 'react-router-dom'
 
 import Header from './layout/Header';
 import Dashboard from './leads/Dashboard';
+import DashboardApi from './apis/DashboardApi';
+
 import Alerts from './layout/Alerts';
 import Register from './accounts/Register';
 import Login from './accounts/Login';
@@ -40,9 +42,10 @@ class App extends Component {
              <Header></Header>
              <Alerts></Alerts>
              <div className="container">
-             
+             HOLA1
              <Switch>
-                  <PrivateRoute exact path="/" component={Dashboard} />
+                  
+                  <PrivateRoute exact path="/" component={DashboardApi} />
                   <Route exact path="/register" component={Register} />
                   <Route exact path="/login" component={Login} />
               </Switch>

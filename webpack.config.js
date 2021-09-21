@@ -1,5 +1,7 @@
 const webpack = require('webpack')
 
+const path = require('path');
+
 module.exports = {
  
   resolve: {
@@ -27,17 +29,39 @@ module.exports = {
     }
    },
    
-    module: {
-      rules: [
-        {
-          test: /\.js$/,
-          exclude: /node_modules/,
-          use: {
-            loader: "babel-loader"
+   module: {
+    rules: [
+      { 
+        test: /\.(js)$/, 
+        exclude: /node_modules/, 
+        loader: "babel-loader" 
+        
+      },
+      {
+        test: /\.css$/i,
+        use: ['style-loader', 'css-loader'],
+      }, 
+      {
+        test: /\.(png|svg|jpe?g|gif)$/,
+        include: /images/,
+        use: [
+          {
+            loader: 'file-loader',
+            options: {
+              name: '[name].[ext]',
+              outputPath: 'images/',
+              publicPath: 'images/'
+            }
           }
-        }
-      ],
-    },
+        ]
+      },
+    ]
+   },
+   entry: './app/game/index.js',
+   output: {
+    filename: 'main.js',
+    path: __dirname + "/src/main/resources/static"
+   },
 
     plugins: [  
       new webpack.DefinePlugin({
