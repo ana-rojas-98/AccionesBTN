@@ -18,6 +18,7 @@ class Api(models.Model):
     valueBTC = models.FloatField(default=50000)
     valorArriba = models.FloatField(default=50000)
     valorAbajo = models.FloatField(default=50000)
+    rangoCompraVenta = models.FloatField(default=500)
     porcentaje = models.FloatField(default=20)
     User = models.ForeignKey(
         User, related_name="Apis", on_delete=models.CASCADE, null=True)

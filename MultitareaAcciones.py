@@ -6,7 +6,7 @@ import multiprocessing
 from binance import Client
 from decimal import Decimal as D, ROUND_DOWN, ROUND_UP
 import math
-
+import time
 
 options = {}
 options['origin'] = 'https://exchange.blockchain.com'
@@ -22,7 +22,7 @@ db = pymysql.connect(host='localhost',
         charset='utf8mb4')
 
 cursor = db.cursor()
-sql = "SELECT * FROM acciones_api \
+sql = "SELECT * FROM Acciones_api \
 WHERE active = 1".format(0)
 cursor.execute(sql)
 
@@ -38,62 +38,40 @@ class MySocket(object):
         print(jsonMensaje["p"])
         cursor = db.cursor()
         #val=1
-        sql1 = "SELECT * FROM acciones_api WHERE active = 1 and id=%s".format(0)
+        sql1 = "SELECT * FROM Acciones_api WHERE active = 1 and id=%s".format(0)
         cursor.execute(sql1, self.tarea)
-        results = cursor.fetchall()
-        valor=results[0][6]
-        ValorporArriba=results[0][9]
-        ValorporAbajo=results[0][8]
-        porcentaje= results[0][7]/100
-        print("Valor ",valor)
-        print("ValorArriba ",ValorporArriba)
-        print("ValorAbajo ",ValorporAbajo)
-        print("Porcentaje ",porcentaje)
-        limiteInferior1= ValorporArriba-ValorporArriba*porcentaje
-        limiteSuperior1= ValorporArriba+ValorporArriba*porcentaje
-        limiteInferior2= ValorporAbajo-ValorporAbajo*porcentaje
-        limiteSuperior2= ValorporAbajo+ValorporAbajo*porcentaje
-        if(limiteInferior1<=float(jsonMensaje["p"])<=limiteSuperior1):
-            #idn=1
-            valor=ValorporArriba
-            sql1 = "UPDATE acciones_api SET valueBTC = %s WHERE id = %s;".format(0)
-            val = (ValorporArriba, self.tarea)
-            cursor.execute(sql1, val)
-            results = cursor.fetchall()
-            db.commit()
-            sql1 = "INSERT INTO acciones_historialordenes (`tipo`, `resultado`,  `Api_id`) VALUES (%s,%s,%s)".format(0)
-            order1="se actualizo tope al registro mayor"
-            val = ("Actualización", order1, self.tarea)
-            cursor.execute(sql1, val)
-            results = cursor.fetchall()
-            db.commit()
-            print("se actualizo registro mayor")
-        if(limiteInferior2<=float(jsonMensaje["p"])<=limiteSuperior2):
-            #idn=1
-            valor=ValorporAbajo
-            sql1 = "UPDATE acciones_api SET valueBTC = %s WHERE id = %s;".format(0)
-            val = (ValorporAbajo, self.tarea)
-            cursor.execute(sql1, val)
-            results = cursor.fetchall()
-            db.commit()
-            sql1 = "INSERT INTO acciones_historialordenes (`tipo`, `resultado`, `created_at`, `Api_id`) VALUES (%s,%s,now(),%s)".format(0)
-            order1="se actualizo tope al registro menor"
-            val = ("Actualización", order1, self.tarea)
-            cursor.execute(sql1, val)
-            results = cursor.fetchall()
-            db.commit()
-            print("se actualizo registro menor")
+        self.results = cursor.fetchall()
+        db.commit()
+        self.valor=self.results[0][6]
+        self.valorporArriba=self.results[0][9]
+        self.valorporAbajo=self.results[0][8]
+        self.porcentaje=self.results[0][7]/100
+        self.rangoCompraVenta=self.results[0][10]
+        print("Valor ",self.valor)
+        print("ValorArriba ",self.valorporArriba)
+        print("ValorAbajo ",self.valorporAbajo)
+        print("Porcentaje ",self.porcentaje)
+        print("rangoCompraVenta ",self.rangoCompraVenta)
+        limiteInferior1= self.valorporArriba-self.valorporArriba*self.porcentaje
+        limiteSuperior1= self.valorporArriba+self.valorporArriba*self.porcentaje
+        limiteInferior2= self.valorporAbajo-self.valorporAbajo*self.porcentaje
+        limiteSuperior2= self.valorporAbajo+self.valorporAbajo*self.porcentaje
+        
 
-        valorcomision= float(self.USDT_balance['free'])*0.001
-        valorComprar = (valor-valorcomision)
-        print("Comision ", valorcomision)
-        print("Valor para comprar ", valorComprar)
-        if(float(jsonMensaje["p"])>=valorComprar):
-            if(float(self.USDT_balance['free'])>0.1):
-                self.BTC_balance = self.clientUser.get_asset_balance(asset='BTC')
-                self.USDT_balance = self.clientUser.get_asset_balance(asset='USDT')
+        #self.valorcomision= float(self.USDT_balance['free'])*0.001
+        #self.valorComprarInferior = (self.valor-(self.valorcomision))-(self.valor*0.02)
+        #self.valorComprarSuperior = (self.valor-(self.valorcomision*8))
+        #print("Comision ", self.valorcomision)
+        #print("self.valor para comprar inferior", self.valorComprarInferior)
+        #print("self.valor para comprar superior", self.valorComprarSuperior)
+        valormasRango=self.valor+self.rangoCompraVenta
+        print("valormasRango ", valormasRango)
+        if(float(jsonMensaje["p"])>=valormasRango):
+            if(float(self.USDT_balance['free'])>10.3):
+                #self.BTC_balance = self.clientUser.get_asset_balance(asset='BTC')
+                #self.USDT_balance = self.clientUser.get_asset_balance(asset='USDT')
                 print(self.USDT_balance['free'])
-                if(float(self.USDT_balance['free'])>0.1):
+                if(float(self.USDT_balance['free'])>10.3):
                     USDT=float(self.USDT_balance['free'])
                     VALORACTUAL=float(jsonMensaje["p"])
                     cantidadBTC = USDT/VALORACTUAL
@@ -106,14 +84,16 @@ class MySocket(object):
                     if(USDT>10.3):
                         #order1=self.clientUser.create_order(symbol='BTCUSDT',side=Client.SIDE_BUY,type=Client.ORDER_TYPE_MARKET,quantity=quant)
                         #print(order1)
+                        order1="pruebaCompra"
+                        ordenresul=str(order1)
                         print("Comprar hay USD")
                         self.BTC_balance = self.clientUser.get_asset_balance(asset='BTC')
                         self.USDT_balance = self.clientUser.get_asset_balance(asset='USDT')
                         print("Nueva cantidad BTC" , self.BTC_balance['free'])
                         print("Nueva cantidad USDT" , self.USDT_balance['free'])
-                        sql1 = "INSERT INTO acciones_historialordenes (`tipo`, `resultado`, `created_at`, `Api_id`) VALUES (%s,%s,now(),%s)".format(0)
-                        order1="prueba"
-                        val = ("Compra", order1, self.tarea)
+                        sql1 = "INSERT INTO Acciones_historialordenes (`tipo`, `resultado`, `created_at`, `Api_id`) VALUES (%s,%s,now(),%s)".format(0)
+                        valacc="Compra " +jsonMensaje["p"]
+                        val = (valacc, ordenresul, self.tarea)
                         cursor.execute(sql1, val)
                         results = cursor.fetchall()
                         db.commit()
@@ -123,14 +103,18 @@ class MySocket(object):
                 print("Comprar no hay USD")
 
         else:
-            valorcomision =float(self.USDT_balance['free'])*0.001
-            valorVender = (valor+valorcomision)
-            print("Comision ", valorcomision)
-            print("Valor para vender ", valorVender)
-            if(float(jsonMensaje["p"])<valorVender):
+            #valorcomision =float(self.USDT_balance['free'])*0.001
+            #valorVenderInferior = (valor+(valorcomision))+(valor*0.01)
+            #valorVenderSuperior = (valor+valorcomision)+(valor*0.02)
+            #print("Comision ", valorcomision)
+            #print("Valor para vender inferior ", valorVenderInferior)
+            #print("Valor para vender superior ", valorVenderSuperior)
+            valormenosRango=self.valor-self.rangoCompraVenta
+            print("valormenosRango ", valormenosRango)
+            if(float(jsonMensaje["p"])<=valormenosRango):
                 if(float(self.BTC_balance['free'])>self.minimum):
-                    self.BTC_balance = self.clientUser.get_asset_balance(asset='BTC')
-                    self.USDT_balance = self.clientUser.get_asset_balance(asset='USDT')
+                    #self.BTC_balance = self.clientUser.get_asset_balance(asset='BTC')
+                    #self.USDT_balance = self.clientUser.get_asset_balance(asset='USDT')
                     if(float(self.BTC_balance['free'])>self.minimum):
                         BTC = float(self.BTC_balance['free'])
                         print("saldo", BTC)
@@ -142,14 +126,16 @@ class MySocket(object):
                         if(quant>self.minimum):
                             #order1=self.clientUser.create_order(symbol='BTCUSDT',side=Client.SIDE_SELL,type=Client.ORDER_TYPE_MARKET,quantity=quant)
                             #print(order1)
+                            order1="pruebaVenta"
+                            ordenresul=str(order1)
                             print("Vender hay BTC")
                             self.BTC_balance = self.clientUser.get_asset_balance(asset='BTC')
                             self.USDT_balance = self.clientUser.get_asset_balance(asset='USDT')
                             print("Nueva cantidad BTC" , self.BTC_balance['free'])
                             print("Nueva cantidad USDT" , self.USDT_balance['free'])
-                            sql1 = "INSERT INTO acciones_historialordenes (`tipo`, `resultado`, `created_at`, `Api_id`) VALUES (%s,%s,now(),%s)".format(0)
-                            order1="prueba"
-                            val = ("Venta", order1, self.tarea)
+                            sql1 = "INSERT INTO Acciones_historialordenes (`tipo`, `resultado`, `created_at`, `Api_id`) VALUES (%s,%s,now(),%s)".format(0)
+                            valacc="venta " +jsonMensaje["p"]
+                            val = (valacc, ordenresul, self.tarea)
                             cursor.execute(sql1, val)
                             results = cursor.fetchall()
                             db.commit()
@@ -157,6 +143,40 @@ class MySocket(object):
                             print("Vender hay BTC Orden muy pequeña")
                 else:
                     print("Vender no hay BTC")
+            else:
+                print("Fuera de rango para comprar y vender")
+
+        if(limiteInferior1<=float(jsonMensaje["p"])<=limiteSuperior1):
+            #idn=1
+            valor=self.valorporArriba
+            sql1 = "UPDATE Acciones_api SET valueBTC = %s WHERE id = %s;".format(0)
+            val = (self.valorporArriba, self.tarea)
+            cursor.execute(sql1, val)
+            results = cursor.fetchall()
+            db.commit()
+            sql1 = "INSERT INTO Acciones_historialordenes (`tipo`, `resultado`,  `Api_id`) VALUES (%s,%s,%s)".format(0)
+            order1="se actualizo tope al registro mayor " + str(self.valorporArriba) 
+            val = ("Actualización", order1, self.tarea)
+            cursor.execute(sql1, val)
+            results = cursor.fetchall()
+            db.commit()
+            print("se actualizo registro mayor")
+        if(limiteInferior2<=float(jsonMensaje["p"])<=limiteSuperior2):
+            #idn=1
+            valor=self.valorporAbajo
+            sql1 = "UPDATE Acciones_api SET valueBTC = %s WHERE id = %s;".format(0)
+            val = (self.valorporAbajo, self.tarea)
+            cursor.execute(sql1, val)
+            results = cursor.fetchall()
+            db.commit()
+            sql1 = "INSERT INTO Acciones_historialordenes (`tipo`, `resultado`, `created_at`, `Api_id`) VALUES (%s,%s,now(),%s)".format(0)
+            order1="se actualizo tope al registro menor " + str(self.valorporAbajo) 
+            val = ("Actualización", order1, self.tarea)
+            cursor.execute(sql1, val)
+            results = cursor.fetchall()
+            db.commit()
+            print("se actualizo registro menor")
+        #time.sleep(2)
 
         
                 
