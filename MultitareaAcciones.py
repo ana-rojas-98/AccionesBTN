@@ -7,6 +7,8 @@ from binance import Client
 from decimal import Decimal as D, ROUND_DOWN, ROUND_UP
 import math
 import time
+import datetime
+import pytz
 
 options = {}
 options['origin'] = 'https://exchange.blockchain.com'
@@ -38,26 +40,32 @@ class MySocket(object):
         print(jsonMensaje["p"])
         cursor = db.cursor()
         #val=1
-        sql1 = "SELECT * FROM Acciones_api WHERE active = 1 and id=%s".format(0)
+        sql1 = "SELECT * FROM  Acciones_api WHERE active = 1 and id=%s".format(0)
         cursor.execute(sql1, self.tarea)
         self.results = cursor.fetchall()
         db.commit()
         self.valor=self.results[0][6]
         self.valorporArriba=self.results[0][9]
         self.valorporAbajo=self.results[0][8]
-        self.porcentaje=self.results[0][7]/100
+        self.porcentaje=self.results[0][7]
         self.rangoCompraVenta=self.results[0][10]
+        self.nuevoAbajoAbajo = self.results[0][11]
+        self.nuevoAbajoArriba = self.results[0][12]
+        self.nuevoArribaAbajo = self.results[0][13]
+        self.nuevoArribaArriba = self.results[0][14]
         print("Valor ",self.valor)
         print("ValorArriba ",self.valorporArriba)
         print("ValorAbajo ",self.valorporAbajo)
         print("Porcentaje ",self.porcentaje)
         print("rangoCompraVenta ",self.rangoCompraVenta)
-        limiteInferior1= self.valorporArriba-self.valorporArriba*self.porcentaje
-        limiteSuperior1= self.valorporArriba+self.valorporArriba*self.porcentaje
-        limiteInferior2= self.valorporAbajo-self.valorporAbajo*self.porcentaje
-        limiteSuperior2= self.valorporAbajo+self.valorporAbajo*self.porcentaje
-        
-
+        limiteInferior1= self.valorporArriba-self.porcentaje
+        limiteSuperior1= self.valorporArriba+self.porcentaje
+        limiteInferior2= self.valorporAbajo-self.porcentaje
+        limiteSuperior2= self.valorporAbajo+self.porcentaje
+        print(limiteInferior1)
+        print(limiteSuperior1)
+        print(limiteInferior2)
+        print(limiteSuperior2)
         #self.valorcomision= float(self.USDT_balance['free'])*0.001
         #self.valorComprarInferior = (self.valor-(self.valorcomision))-(self.valor*0.02)
         #self.valorComprarSuperior = (self.valor-(self.valorcomision*8))
@@ -91,9 +99,10 @@ class MySocket(object):
                         self.USDT_balance = self.clientUser.get_asset_balance(asset='USDT')
                         print("Nueva cantidad BTC" , self.BTC_balance['free'])
                         print("Nueva cantidad USDT" , self.USDT_balance['free'])
-                        sql1 = "INSERT INTO Acciones_historialordenes (`tipo`, `resultado`, `created_at`, `Api_id`) VALUES (%s,%s,now(),%s)".format(0)
+                        my_date = datetime.datetime.now(pytz.timezone('america/bogota'))
+                        sql1 = "INSERT INTO  Acciones_historialordenes (`tipo`, `resultado`, `created_at`, `Api_id`) VALUES (%s,%s,%s,%s)".format(0)
                         valacc="Compra " +jsonMensaje["p"]
-                        val = (valacc, ordenresul, self.tarea)
+                        val = (valacc, ordenresul,my_date, self.tarea)
                         cursor.execute(sql1, val)
                         results = cursor.fetchall()
                         db.commit()
@@ -133,9 +142,10 @@ class MySocket(object):
                             self.USDT_balance = self.clientUser.get_asset_balance(asset='USDT')
                             print("Nueva cantidad BTC" , self.BTC_balance['free'])
                             print("Nueva cantidad USDT" , self.USDT_balance['free'])
-                            sql1 = "INSERT INTO Acciones_historialordenes (`tipo`, `resultado`, `created_at`, `Api_id`) VALUES (%s,%s,now(),%s)".format(0)
+                            my_date = datetime.datetime.now(pytz.timezone('america/bogota'))
+                            sql1 = "INSERT INTO  Acciones_historialordenes (`tipo`, `resultado`, `created_at`, `Api_id`) VALUES (%s,%s,%s,%s)".format(0)
                             valacc="venta " +jsonMensaje["p"]
-                            val = (valacc, ordenresul, self.tarea)
+                            val = (valacc, ordenresul,my_date, self.tarea)
                             cursor.execute(sql1, val)
                             results = cursor.fetchall()
                             db.commit()
@@ -149,14 +159,17 @@ class MySocket(object):
         if(limiteInferior1<=float(jsonMensaje["p"])<=limiteSuperior1):
             #idn=1
             valor=self.valorporArriba
-            sql1 = "UPDATE Acciones_api SET valueBTC = %s WHERE id = %s;".format(0)
-            val = (self.valorporArriba, self.tarea)
+            NuevoValorArriba = self.valorporArriba + self.nuevoArribaArriba
+            NuevoValorAbajo=self.valorporArriba - self.nuevoArribaAbajo
+            sql1 = "UPDATE  Acciones_api SET valueBTC = %s, valorAbajo = %s, valorArriba = %s  WHERE id = %s;".format(0)
+            val = (self.valorporArriba,NuevoValorAbajo,NuevoValorArriba, self.tarea)
             cursor.execute(sql1, val)
             results = cursor.fetchall()
             db.commit()
-            sql1 = "INSERT INTO Acciones_historialordenes (`tipo`, `resultado`,  `Api_id`) VALUES (%s,%s,%s)".format(0)
+            my_date = datetime.datetime.now(pytz.timezone('america/bogota'))
+            sql1 = "INSERT INTO  Acciones_historialordenes (`tipo`, `resultado`, `created_at`, `Api_id`) VALUES (%s,%s,%s,%s)".format(0)
             order1="se actualizo tope al registro mayor " + str(self.valorporArriba) 
-            val = ("Actualización", order1, self.tarea)
+            val = ("Actualización", order1,my_date, self.tarea)
             cursor.execute(sql1, val)
             results = cursor.fetchall()
             db.commit()
@@ -164,14 +177,17 @@ class MySocket(object):
         if(limiteInferior2<=float(jsonMensaje["p"])<=limiteSuperior2):
             #idn=1
             valor=self.valorporAbajo
-            sql1 = "UPDATE Acciones_api SET valueBTC = %s WHERE id = %s;".format(0)
-            val = (self.valorporAbajo, self.tarea)
+            NuevoValorArriba = self.valorporAbajo + self.nuevoAbajoArriba
+            NuevoValorAbajo=self.valorporAbajo - self.nuevoAbajoAbajo
+            sql1 = "UPDATE  Acciones_api SET valueBTC = %s, valorAbajo = %s, valorAbajo = %s WHERE id = %s;".format(0)
+            val = (self.valorporAbajo, NuevoValorAbajo,NuevoValorArriba, self.tarea)
             cursor.execute(sql1, val)
             results = cursor.fetchall()
             db.commit()
-            sql1 = "INSERT INTO Acciones_historialordenes (`tipo`, `resultado`, `created_at`, `Api_id`) VALUES (%s,%s,now(),%s)".format(0)
+            my_date = datetime.datetime.now(pytz.timezone('america/bogota'))
+            sql1 = "INSERT INTO  Acciones_historialordenes (`tipo`, `resultado`, `created_at`, `Api_id`) VALUES (%s,%s,%s,%s)".format(0)
             order1="se actualizo tope al registro menor " + str(self.valorporAbajo) 
-            val = ("Actualización", order1, self.tarea)
+            val = ("Actualización", order1,my_date,self.tarea)
             cursor.execute(sql1, val)
             results = cursor.fetchall()
             db.commit()

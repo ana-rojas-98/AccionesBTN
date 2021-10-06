@@ -20,6 +20,10 @@ class Api(models.Model):
     valorAbajo = models.FloatField(default=50000)
     rangoCompraVenta = models.FloatField(default=500)
     porcentaje = models.FloatField(default=20)
+    nuevoArribaArriba = models.FloatField(default=10000)
+    nuevoAbajoArriba = models.FloatField(default=10000)
+    nuevoArribaAbajo = models.FloatField(default=10000)
+    nuevoAbajoAbajo = models.FloatField(default=10000)
     User = models.ForeignKey(
         User, related_name="Apis", on_delete=models.CASCADE, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
