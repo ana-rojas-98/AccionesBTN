@@ -1,4 +1,4 @@
-import { GET_APIS, PUT_APIS } from '../actions/types.js';
+import { GET_APIS, PUT_APIS, ADD_APIS } from '../actions/types.js';
 
 const initialState = {
     apis: [],
@@ -15,7 +15,12 @@ export default function (state = initialState, action) {
       case PUT_APIS:
         return {
         ...state,
-        leads: [...state.leads, action.payload],
+        apis: [action.payload],
+        };
+      case ADD_APIS:
+          return {
+            ...state,
+            apis: [...state.apis, action.payload],
         };
 
        default:

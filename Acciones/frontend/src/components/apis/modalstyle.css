@@ -47,3 +47,20 @@
 .secundario{
   margin: 0 auto;
 }
+
+
+.table-page {
+  padding: 0 0 0;
+  margin: 0 auto auto;
+  max-width: 95%;
+  position: relative;
+}
+ 
+
+
+.table-desing {
+  box-shadow: 0 0 27px 0 rgba(84, 84, 84, 0.62);
+  background: #ffff;
+  padding-top: 20px;
+
+}

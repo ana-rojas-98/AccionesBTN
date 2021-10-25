@@ -42,13 +42,12 @@ class App extends Component {
              <Header></Header>
              <Alerts></Alerts>
              <div className="container">
-             HOLA1
-             <Switch>
+            
                   
                   <PrivateRoute exact path="/" component={DashboardApi} />
                   <Route exact path="/register" component={Register} />
                   <Route exact path="/login" component={Login} />
-              </Switch>
+              
              </div>
          </Fragment>
          </Router>

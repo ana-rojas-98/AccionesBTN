@@ -4,6 +4,7 @@ import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { register } from '../../actions/auth';
 import { createMessage } from '../../actions/messages';
+import './diseño.css'
 
 export class Register extends Component {
 
@@ -43,12 +44,14 @@ export class Register extends Component {
       }
         const { username, email, password, password2 } = this.state;
         return (
-            <div className="col-md-6 m-auto">
-        <div className="card card-body mt-5">
-          <h2 className="text-center">Register</h2>
+
+            <div class="container">
+             <div class="row  register-page">
+	            <div class="col-md-12 login-form">
+          <h2 className="text-center">Registrarse</h2>
           <form onSubmit={this.onSubmit}>
             <div className="form-group">
-              <label>Username</label>
+              <label>Nombre de usuario</label>
               <input
                 type="text"
                 className="form-control"
@@ -58,7 +61,7 @@ export class Register extends Component {
               />
             </div>
             <div className="form-group">
-              <label>Email</label>
+              <label>Correo</label>
               <input
                 type="email"
                 className="form-control"
@@ -68,7 +71,7 @@ export class Register extends Component {
               />
             </div>
             <div className="form-group">
-              <label>Password</label>
+              <label>Contraseña</label>
               <input
                 type="password"
                 className="form-control"
@@ -78,7 +81,7 @@ export class Register extends Component {
               />
             </div>
             <div className="form-group">
-              <label>Confirm Password</label>
+              <label>Confirmar comtraseña</label>
               <input
                 type="password"
                 className="form-control"
@@ -88,15 +91,16 @@ export class Register extends Component {
               />
             </div>
             <div className="form-group">
-              <button type="submit" className="btn btn-primary">
-                Register
+              <button type="submit" className="btn btn-dark btn-lg btn-block">
+                 Aceptar
               </button>
             </div>
-            <p>
-              Already have an account? <Link to="/login">Login</Link>
+            <p className="text-right">
+              ¿Ya tienes una cuenta? <Link to="/login">Iniciar Sesión</Link>
             </p>
           </form>
         </div>
+      </div>
       </div>
         )
     }

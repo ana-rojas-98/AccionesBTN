@@ -1,7 +1,8 @@
 
 from Acciones.models import Lead
 from rest_framework.response import Response
-from .serializers import UserSerializer, LeadSerializer, ApiSerializer
+from .serializers import UserSerializer, LeadSerializer, ApiSerializer, HistorialOrdenesSerializer
+from .models import HistorialOrdenes, Api
 from rest_framework.views import APIView
 from rest_framework import status, viewsets, permissions
 import numpy as np
@@ -46,6 +47,22 @@ class ApiLeadViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return self.request.user.Apis.all()
+
+    def perform_create(self, serializer):
+        serializer.save(User=self.request.user)
+
+
+
+class HistorialOrdenesViewSet(viewsets.ModelViewSet): 
+    permission_classes = [
+        permissions.IsAuthenticated,
+    ]
+
+    serializer_class = HistorialOrdenesSerializer
+    queryset = HistorialOrdenes.objects.all()
+
+    def get_queryset(self):
+        return self.queryset.filter(Api__User=self.request.user.id)
 
     def perform_create(self, serializer):
         serializer.save(User=self.request.user)

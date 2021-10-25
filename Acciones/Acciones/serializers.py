@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from Acciones.models import Lead, Api
+from Acciones.models import Lead, Api, HistorialOrdenes
 
 class UserSerializer(serializers.Serializer): 
     id = serializers.ReadOnlyField()
@@ -37,4 +37,16 @@ class LeadSerializer(serializers.ModelSerializer):
 class ApiSerializer(serializers.ModelSerializer):
     class Meta: 
         model = Api
+        fields = '__all__'
+
+
+class ApiSerializerUser(serializers.ModelSerializer):
+    class Meta: 
+        model = Api
+        fields = ('id','User')
+
+class HistorialOrdenesSerializer(serializers.ModelSerializer):
+    Api = ApiSerializerUser(read_only=False)
+    class Meta: 
+        model = HistorialOrdenes
         fields = '__all__'

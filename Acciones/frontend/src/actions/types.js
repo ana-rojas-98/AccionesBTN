@@ -17,3 +17,10 @@ export const CLEAR_LEADS = 'CLEAR_LEADS';
 
 export const GET_APIS = 'GET_APIS';
 export const PUT_APIS ='PUT_APIS'; 
+export const ADD_APIS ='ADD_APIS';
+
+export const GET_HISTORIAL = 'GET_HISTORIAL';
+export const PUT_HISTORIAL ='PUT_HISTORIAL'; 
+export const ADD_HISTORIAL ='ADD_HISTORIAL'; 
+
+

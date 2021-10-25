@@ -3,7 +3,7 @@ import { Link, Redirect } from 'react-router-dom';
 import { connect } from 'react-redux';
 import PropTypes from 'prop-types';
 import { login } from '../../actions/auth';
-
+import './diseño.css'
 
 export class Login extends Component {
 
@@ -30,12 +30,19 @@ export class Login extends Component {
         }
         const { username, password } = this.state;
         return (
-          <div className="col-md-6 m-auto">
-            <div className="card card-body mt-5">
-              <h2 className="text-center">Login</h2>
+
+          
+          <div class="container">
+             <div class="row  login-page">
+	            <div class="col-md-12 login-form">
+          
+          
+            
+             
+              <h2 className="text-center">Iniciar sesión</h2>
               <form onSubmit={this.onSubmit}>
                 <div className="form-group">
-                  <label>Username</label>
+                  <label>Usuario</label>
                   <input
                     type="text"
                     className="form-control"
@@ -46,7 +53,7 @@ export class Login extends Component {
                 </div>
     
                 <div className="form-group">
-                  <label>Password</label>
+                  <label>Contraseña</label>
                   <input
                     type="password"
                     className="form-control"
@@ -57,16 +64,18 @@ export class Login extends Component {
                 </div>
     
                 <div className="form-group">
-                  <button type="submit" className="btn btn-primary">
-                    Login
+                  <button type="submit" className="btn btn-dark btn-lg btn-block">
+                    Iniciar sesión
                   </button>
                 </div>
-                <p>
-                  Don't have an account? <Link to="/register">Register</Link>
+                <p className="text-right">
+                  ¿Aún no tienes cuenta? <Link to="/register">Registrarse</Link>
                 </p>
               </form>
-            </div>
-          </div>
+              </div>
+              </div>
+              </div>
+           
         );
       }
     }

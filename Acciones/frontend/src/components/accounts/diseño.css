@@ -1,0 +1,40 @@
+@import url(http://fonts.googleapis.com/css?family=Oswald:400,300,700);
+ 
+  body {
+    font-family: 'Oswald', sans-serif !important;
+    background: #e4e9da; 
+    background: -webkit-linear-gradient(to right, #0748a9, #007dbb, #16a6b1, #98c9b3, #e4e9da);
+    background-image:  linear-gradient(to right, #0748a9, #007dbb, #16a6b1, #98c9b3, #e4e9da);
+    
+  }
+
+  
+ 
+  .login-page {
+    padding: 15% 0 0;
+    margin: 0 auto auto;
+    max-width: 360px;
+    position: relative;
+  }
+   
+  .register-page {
+    padding: 8% 0 0;
+    margin: 0 auto auto;
+    max-width: 360px;
+    position: relative;
+  }
+  
+  .login-form {
+    box-shadow: 0 0 27px 0 rgba(84, 84, 84, 0.62);
+    background: #ffff;
+    padding-top: 20px;
+  
+ }
+
+ 
+
+
+
+  
+  
+  
